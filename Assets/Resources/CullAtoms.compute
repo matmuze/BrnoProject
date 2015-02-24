@@ -1,0 +1,61 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+uniform int _AtomCount;
+uniform int _TunnelSphereCount;
+
+uniform float _Scale;
+uniform float _AtomRadius;
+uniform float4 _WorldSpaceCameraPos;
+
+uniform	StructuredBuffer<int> _AtomTypes;
+uniform	StructuredBuffer<float> _AtomRadii;
+uniform	StructuredBuffer<float4> _AtomPositions;
+		
+uniform	StructuredBuffer<float> _TunnelSphereRadii;
+uniform	StructuredBuffer<float4> _TunnelSpherePositions;
+
+uniform	RWStructuredBuffer<int> _CulledAtoms;
+
+[numthreads(64,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+	if(id.x >= _AtomCount) return;
+	
+	float atom_type = _AtomTypes[id.x];
+	float atom_radius = _AtomRadii[atom_type] * _Scale;
+	float3 atom_pos = _AtomPositions[id.x] * _Scale;   
+
+	bool cull_atom = false;
+
+    // Test point to cone intersection
+	for(int i = 0; i < _TunnelSphereCount; i++)
+	{
+		float tunnel_radius = _TunnelSphereRadii[i] * _Scale;
+		float3 x = _TunnelSpherePositions[i] * _Scale; // tip of the cone
+		float3 dir = normalize(_WorldSpaceCameraPos - x); // normalized axis vector, pointing from the tip to the base
+									
+		float h = 50 * _Scale;	
+		float big_base_radius = tunnel_radius * 4; // base radius
+		float small_base_radius = tunnel_radius * 4; // small base radius
+			
+		float3 p = atom_pos;
+			
+		float cone_dist = dot(p - x, dir);
+		if(cone_dist < 0) continue;			
+			
+		float cone_radius = small_base_radius + (big_base_radius - small_base_radius) * (cone_dist / h);
+		cone_radius = min(cone_radius, big_base_radius);
+
+		float3 p_proj = x + cone_dist * dir;
+		float dist = distance(p_proj, p);			
+		
+		if(dist - (cone_radius + atom_radius * 0.3) <= 0) 
+		{
+			cull_atom = true;
+			break;
+		}
+	}
+
+	_CulledAtoms[id.x] = (int)cull_atom;
+}

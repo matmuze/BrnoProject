@@ -1,0 +1,36 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+uniform int _NumAtoms;
+uniform int _NumTunnelSpheres;
+
+uniform float _SpeedReduction;
+uniform float _SpeedReductionMin;
+
+uniform	StructuredBuffer<float4> _AtomPositions;
+uniform	RWStructuredBuffer<float4> _AtomDisplayPositions;
+		
+uniform	StructuredBuffer<float> _TunnelSphereRadii;
+uniform	StructuredBuffer<float4> _TunnelSpherePositions;
+
+[numthreads(64,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+	//float minDist = 100;
+ //   float maxDist = 10;
+
+	float3 atom_pos = _AtomPositions[id.x].xyz;
+
+ //   for (int j = 0; j < _NumTunnelSpheres; j++)
+ //   {
+	//	float3 tunnel_sphere_pos = _TunnelSpherePositions[id.x];
+ //       minDist = min(distance(atom_pos, tunnel_sphere_pos), minDist);	
+ //   }
+
+ //   float speedReduction = 1 - (Mathf.Min(minDist, maxDist) / maxDist);
+
+    //speedReduction *= SpeedReduction;
+    //speedReduction += SpeedReductionMin;
+
+    _AtomDisplayPositions[id.x].xyz += (atom_pos - _AtomDisplayPositions[id.x]) * max(_SpeedReduction, _SpeedReductionMin);
+}

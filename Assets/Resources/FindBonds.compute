@@ -1,0 +1,44 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+
+uniform int _AtomCount;
+
+uniform	StructuredBuffer<int> _AtomTypes;
+uniform	StructuredBuffer<float4> _AtomPositions;
+
+uniform	AppendStructuredBuffer<int2> _AtomBonds;
+
+[numthreads(512,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+	if(id.x >= _AtomCount) return;
+
+    float3 atom_1 = _AtomPositions[id.x].xyz;
+	int atom_symbol_1 = _AtomTypes[id.x];
+
+	for (int i = id.x + 1; i <= id.x + 50 ; i++)
+	{
+		if(i >= _AtomCount) break;
+
+		float3 atom_2 = _AtomPositions[i].xyz;
+		int atom_symbol_2 = _AtomTypes[i];
+        		   
+		float cutoff = 1.6f;
+
+		if ((atom_symbol_1 == 1) && (atom_symbol_2 == 1)) continue; // "H"
+		if ((atom_symbol_1 == 5) || (atom_symbol_2 == 5)) cutoff = 1.84f; // "S"
+		//if ((atomSymbol1 == "O" && atomSymbol2 == "P") || (atomSymbol2 == "O" && atomSymbol1 == "P")) cutoff = 1.84f;
+		//if ((atomSymbol1 == "O" && atomSymbol2 == "H") || (atomSymbol2 == "O" && atomSymbol1 == "H")) cutoff = 1.84f;
+
+		float dist = distance(atom_1, atom_2);
+		
+		if (dist <= cutoff)
+		{
+			int2 bond = int2(id.x, i);
+			_AtomBonds.Append(bond);
+		}
+	}
+}

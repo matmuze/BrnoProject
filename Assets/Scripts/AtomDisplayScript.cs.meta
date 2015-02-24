@@ -1,0 +1,11 @@
+fileFormatVersion: 2
+guid: d036e8b30f2627e4aa6149dfcad9c14a
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - AtomShader: {fileID: 4800000, guid: f4a58b25ad965a3449e57beff0fd9ad4, type: 3}
+  - DepthNormalsBlitShader: {fileID: 4800000, guid: 324fc0595cbe6dd41a32767527a3a82f,
+      type: 3}
+  executionOrder: 100
+  icon: {instanceID: 0}
+  userData: 
